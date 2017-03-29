@@ -4,7 +4,7 @@
 # FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
 #
 
-import json, re, requests, sys, traceback
+import re, requests, sys, traceback
 import java.lang.String as String
 from com.xebialabs.overthere import CmdLine
 from com.xebialabs.overthere.util import CapturingOverthereExecutionOutputHandler, OverthereUtils
@@ -57,43 +57,43 @@ class PluginClient(object):
         workspace_path=None
         try:
             connection = LocalConnection.getLocalConnection()
-            workspace_path = self.create_tmp_workspace(connection)
+            workspace_path = PluginClient.create_tmp_workspace(connection)
             # Step 1 -- Clone the Repo
             clone_cmd='#!/bin/sh\n%s clone https://github.com/%s/%s.git\n' \
                     % (variables['git_path'], variables['github_organization'], variables['github_repo_name'])
-            self.execute_command(connection, workspace_path, clone_cmd)
+            PluginClient.execute_command(connection, workspace_path, clone_cmd)
             # Step 2 -- Create .travis.yml file
-            self.create_travis_yml_file(connection, workspace_path, variables)
+            PluginClient.create_travis_yml_file(connection, workspace_path, variables)
             # Step 3 -- Sync Travis
             sync_cmd='#!/bin/sh\ncd %s\n%s sync\n' % (variables['github_repo_name'], variables['travis_path'])
-            self.execute_command(connection, workspace_path, sync_cmd)
+            PluginClient.execute_command(connection, workspace_path, sync_cmd)
             # Step 4 -- Enable Project
             enable_cmd='#!/bin/sh\ncd %s\n%s enable --no-interactive\n' % (variables['github_repo_name'], variables['travis_path'])
-            self.execute_command(connection, workspace_path, enable_cmd)
+            PluginClient.execute_command(connection, workspace_path, enable_cmd)
             # Step 5 -- Add HipChat Notifications
             hipchat_cmd='#!/bin/sh\ncd %s\n%s encrypt --no-interactive %s@%s --add notifications.hipchat.rooms\n' \
                     % (variables['github_repo_name'], variables['travis_path'], variables['hipchat_token'], variables['hipchat_room_id'])
-            self.execute_command(connection, workspace_path, hipchat_cmd)
+            PluginClient.execute_command(connection, workspace_path, hipchat_cmd)
             # Step 6 -- Add GitHub Releases
             releases_cmd='#!/bin/sh\ncd %s\n%s encrypt --no-interactive "%s" --add deploy.api_key.secure\n' \
                     % (variables['github_repo_name'], variables['travis_path'], variables['github_api_token'])
-            self.execute_command(connection, workspace_path, releases_cmd)
+            PluginClient.execute_command(connection, workspace_path, releases_cmd)
             # Step 7 -- Add the gradle stuff
             gradle_wrapper_cmd='#!/bin/sh\ncd %s\n%s wrapper --gradle-version %s\n' % (variables['github_repo_name'], variables['gradle_path'], variables['gradle_version'])
-            self.execute_command(connection, workspace_path, gradle_wrapper_cmd)
+            PluginClient.execute_command(connection, workspace_path, gradle_wrapper_cmd)
             # settings.gradle
-            self.create_settings_gradle_file(connection, workspace_path, variables)
+            PluginClient.create_settings_gradle_file(connection, workspace_path, variables)
             # build.gradle
-            self.create_build_gradle_file(connection, workspace_path, variables)
+            PluginClient.create_build_gradle_file(connection, workspace_path, variables)
             # Step 8 -- .gitignore
-            self.create_gitignore_file(connection, workspace_path, variables)
+            PluginClient.create_gitignore_file(connection, workspace_path, variables)
             # Step 9 -- Generate README.md
-            self.create_readme_file(connection, workspace_path, variables)
+            PluginClient.create_readme_file(connection, workspace_path, variables)
             # Step 9 -- Add/Commit/Push
             push_cmd='#!/bin/sh\ncd %s\n%s add -A\n%s commit -m "Initial Plugin Setup"\n%s push "https://%s:%s@github.com/%s/%s.git"' \
                     % (variables['github_repo_name'], variables['git_path'], variables['git_path'], variables['git_path'],
                         variables['github_username'], variables['github_password'], variables['github_organization'], variables['github_repo_name'])
-            self.execute_command(connection, workspace_path, push_cmd)
+            PluginClient.execute_command(connection, workspace_path, push_cmd)
         except Exception:
             traceback.print_exc(file=sys.stdout)
             sys.exit(1)
@@ -103,7 +103,9 @@ class PluginClient(object):
             if connection is not None:
                 connection.close()
 
-    def execute_command(self, connection, workspace_path, command):
+
+    @staticmethod
+    def execute_command(connection, workspace_path, command):
         try:
             print "executing command: %s" % command
             script_file = connection.getFile(OverthereUtils.constructPath(connection.getFile(workspace_path), 'command.cmd'))
@@ -122,7 +124,8 @@ class PluginClient(object):
             traceback.print_exc(file=sys.stdout)
             sys.exit(1)
 
-    def create_tmp_workspace(self, connection):
+    @staticmethod
+    def create_tmp_workspace(connection):
         try:
             tmp_workspace_file = connection.getTempFile('tmp_workspace')
             workspace_path = re.sub('tmp_workspace', '', tmp_workspace_file.getPath())
@@ -146,7 +149,8 @@ class PluginClient(object):
         if self.unix: return "#!/bin/bash\ncd %s\ntar -czf /tmp/workspace.tgz ." % workspace_path
         else: return "@echo off\r\ncd %s\r\ntar -czf C:\\Windows\\Temp\\workspace.tgz .\r\n" % workspace_path
 
-    def create_travis_yml_file(self, connection, workspace_path, variables):
+    @staticmethod
+    def create_travis_yml_file(connection, workspace_path, variables):
         contents='''language: java
 sudo: false
 deploy:
@@ -162,13 +166,15 @@ deploy:
         travis_yml_file=connection.getFile(OverthereUtils.constructPath(connection.getFile(repo_directory), '.travis.yml'))
         OverthereUtils.write(String(contents).getBytes(), travis_yml_file)
 
-    def create_settings_gradle_file(self, connection, workspace_path, variables):
+    @staticmethod
+    def create_settings_gradle_file(connection, workspace_path, variables):
         contents='rootProject.name=\'%s\'\n' % variables['github_repo_name']
         repo_directory=OverthereUtils.constructPath(connection.getFile(workspace_path), '%s' % variables['github_repo_name'])
         settings_gradle_file=connection.getFile(OverthereUtils.constructPath(connection.getFile(repo_directory), 'settings.gradle'))
         OverthereUtils.write(String(contents).getBytes(), settings_gradle_file)
 
-    def create_build_gradle_file(self, connection, workspace_path, variables):
+    @staticmethod
+    def create_build_gradle_file(connection, workspace_path, variables):
         contents='''defaultTasks 'build'
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -180,7 +186,8 @@ version='%s'
         build_gradle_file=connection.getFile(OverthereUtils.constructPath(connection.getFile(repo_directory), 'build.gradle'))
         OverthereUtils.write(String(contents).getBytes(), build_gradle_file)
 
-    def create_gitignore_file(self, connection, workspace_path, variables):
+    @staticmethod
+    def create_gitignore_file(connection, workspace_path, variables):
         contents='''.gradle
 .idea
 build
@@ -191,7 +198,8 @@ supervisord.pid
         gitignore_file=connection.getFile(OverthereUtils.constructPath(connection.getFile(repo_directory), '.gitignore'))
         OverthereUtils.write(String(contents).getBytes(), gitignore_file)
 
-    def create_readme_file(self, connection, workspace_path, variables):
+    @staticmethod
+    def create_readme_file(connection, workspace_path, variables):
         contents='''# %s
 
 [![Build Status](https://travis-ci.org/%s/%s.svg?branch=master)](https://travis-ci.org/%s/%s)
