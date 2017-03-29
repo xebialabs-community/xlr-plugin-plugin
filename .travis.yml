@@ -2,7 +2,9 @@ language: java
 sudo: false
 deploy:
   provider: releases
-  file: build/libs/xlr-plugin-plugin-1.0.0.jar
+  file:
+    - build/libs/xlr-plugin-plugin-1.0.0.jar
+    - build/resources/main/XLR_Plugin_Template.xlr
   skip_cleanup: true
   on:
     all_branches: true

@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+    THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS
+    FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
+-->
+<synthetic xsi:schemaLocation="http://www.xebialabs.com/deployit/synthetic synthetic.xsd"
+           xmlns="http://www.xebialabs.com/deployit/synthetic"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <!-- Plugin Task Configurations -->
+    <type type="plugin.Task" extends="xlrelease.PythonScript" virtual="true">
+        <property name="scriptLocation" default="plugin/PluginTask.py" hidden="true"/>
+        <property name="output" category="output" kind="string" size="large" label="Output" description="The output returned from execution of the Plugin task."/>
+    </type>
+
+    <type type="github.Task" extends="plugin.Task" virtual="true">
+        <property name="github_username" kind="string" category="input" label="GitHub Username" required="true"/>
+        <property name="github_api_token" kind="string" category="input" label="GitHub API Token" required="true" password="true"/>
+        <property name="github_organization" kind="string" category="input" label="GitHub Organization" required="true"/>
+        <property name="github_password" kind="string" category="input" label="GitHub Password" required="true" password="true"/>
+    </type>
+
+    <type type="plugin.CreateGitHubRepository" extends="github.Task" label="Create GitHub Repository">
+        <property name="github_repo_name" kind="string" category="input" label="GitHub Repo Name" required="true"/>
+    </type>
+
+    <type type="plugin.ConfigureGitHubRepository" extends="github.Task" label="Configure GitHub Repository">
+        <property name="github_repo_name" kind="string" category="input" label="GitHub Repo Name" required="true"/>
+        <property name="initial_version" kind="string" category="input" label="Initial Version" required="true"/>
+        <property name="hipchat_token" kind="string" category="input" label="HipChat Token" required="true" password="true"/>
+        <property name="hipchat_room_id" kind="string" category="input" label="HipChat Room ID" required="true"/>
+        <property name="git_path" kind="string" category="input" label="Git Path" required="true"/>
+        <property name="travis_path" kind="string" category="input" label="Travis Path" required="true"/>
+        <property name="gradle_path" kind="string" category="input" label="Gradle Path" required="true"/>
+        <property name="gradle_version" kind="string" category="input" label="Gradle Version" required="true"/>
+    </type>
+</synthetic>
