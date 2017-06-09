@@ -3,8 +3,8 @@ sudo: false
 deploy:
   provider: releases
   file:
-    - build/libs/xlr-plugin-plugin-1.0.0.jar
-    - build/resources/main/XLR_Plugin_Template.xlr
+    - build/libs/xlr-plugin-plugin-1.1.0.jar
+    - build/resources/main/template/XLR_Plugin_Template.xlr/XLR_Plugin_Template.xlr
   skip_cleanup: true
   on:
     all_branches: true

@@ -1,8 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-    THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS
-    FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
+    Copyright 2017 XEBIALABS
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -->
 <synthetic xsi:schemaLocation="http://www.xebialabs.com/deployit/synthetic synthetic.xsd"
            xmlns="http://www.xebialabs.com/deployit/synthetic"
@@ -17,7 +18,8 @@
     <type type="github.Task" extends="plugin.Task" virtual="true">
         <property name="github_username" kind="string" category="input" label="GitHub Username" required="true"/>
         <property name="github_api_token" kind="string" category="input" label="GitHub API Token" required="true" password="true"/>
-        <property name="github_organization" kind="string" category="input" label="GitHub Organization" required="true"/>
+        <property name="create_in_github_organization" kind="boolean" category="input" label="Create In GitHub Organization" required="true"/>
+        <property name="github_organization" kind="string" category="input" label="GitHub Organization"/>
         <property name="github_password" kind="string" category="input" label="GitHub Password" required="true" password="true"/>
     </type>
 
@@ -28,8 +30,9 @@
     <type type="plugin.ConfigureGitHubRepository" extends="github.Task" label="Configure GitHub Repository">
         <property name="github_repo_name" kind="string" category="input" label="GitHub Repo Name" required="true"/>
         <property name="initial_version" kind="string" category="input" label="Initial Version" required="true"/>
-        <property name="hipchat_token" kind="string" category="input" label="HipChat Token" required="true" password="true"/>
-        <property name="hipchat_room_id" kind="string" category="input" label="HipChat Room ID" required="true"/>
+        <property name="integrate_with_hipchat" kind="boolean" category="input" label="Integrate With HipChat?"/>
+        <property name="hipchat_token" kind="string" category="input" label="HipChat Token" password="true"/>
+        <property name="hipchat_room_id" kind="string" category="input" label="HipChat Room ID"/>
         <property name="git_path" kind="string" category="input" label="Git Path" required="true"/>
         <property name="travis_path" kind="string" category="input" label="Travis Path" required="true"/>
         <property name="gradle_path" kind="string" category="input" label="Gradle Path" required="true"/>

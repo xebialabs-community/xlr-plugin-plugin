@@ -1,7 +1,11 @@
 #
-# THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS
-# FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
+# Copyright 2017 XEBIALABS
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
 import re, requests, sys, traceback
@@ -44,10 +48,14 @@ class PluginClient(object):
 
     def plugin_creategithubrepository(self, variables):
         repo_data = '{"name":"%s","private":false}' % variables['github_repo_name']
+        if variables['create_in_github_organization']:
+            endpoint = 'orgs/%s/repos' % variables['github_organization']
+        else:
+            endpoint = 'user/repos'
         return self.get_response_for_endpoint(
             'POST',
             'https://api.github.com',
-            'orgs/%s/repos' % variables['github_organization'],
+            endpoint,
             'Failed to create repository [%s].' % variables['github_repo_name'],
             headers=PluginClient.get_headers(variables['github_api_token']),
             data=repo_data)
@@ -59,8 +67,12 @@ class PluginClient(object):
             connection = LocalConnection.getLocalConnection()
             workspace_path = PluginClient.create_tmp_workspace(connection)
             # Step 1 -- Clone the Repo
+            if variables['create_in_github_organization']:
+                path = variables['github_organization']
+            else:
+                path = variables['github_username']
             clone_cmd='#!/bin/sh\n%s clone https://github.com/%s/%s.git\n' \
-                    % (variables['git_path'], variables['github_organization'], variables['github_repo_name'])
+                    % (variables['git_path'], path, variables['github_repo_name'])
             PluginClient.execute_command(connection, workspace_path, clone_cmd)
             # Step 2 -- Create .travis.yml file
             PluginClient.create_travis_yml_file(connection, workspace_path, variables)
@@ -71,9 +83,10 @@ class PluginClient(object):
             enable_cmd='#!/bin/sh\ncd %s\n%s enable --no-interactive\n' % (variables['github_repo_name'], variables['travis_path'])
             PluginClient.execute_command(connection, workspace_path, enable_cmd)
             # Step 5 -- Add HipChat Notifications
-            hipchat_cmd='#!/bin/sh\ncd %s\n%s encrypt --no-interactive %s@%s --add notifications.hipchat.rooms\n' \
-                    % (variables['github_repo_name'], variables['travis_path'], variables['hipchat_token'], variables['hipchat_room_id'])
-            PluginClient.execute_command(connection, workspace_path, hipchat_cmd)
+            if variables['integrate_with_hipchat']:
+                hipchat_cmd='#!/bin/sh\ncd %s\n%s encrypt --no-interactive %s@%s --add notifications.hipchat.rooms\n' \
+                        % (variables['github_repo_name'], variables['travis_path'], variables['hipchat_token'], variables['hipchat_room_id'])
+                PluginClient.execute_command(connection, workspace_path, hipchat_cmd)
             # Step 6 -- Add GitHub Releases
             releases_cmd='#!/bin/sh\ncd %s\n%s encrypt --no-interactive "%s" --add deploy.api_key.secure\n' \
                     % (variables['github_repo_name'], variables['travis_path'], variables['github_api_token'])
@@ -89,10 +102,12 @@ class PluginClient(object):
             PluginClient.create_gitignore_file(connection, workspace_path, variables)
             # Step 9 -- Generate README.md
             PluginClient.create_readme_file(connection, workspace_path, variables)
-            # Step 9 -- Add/Commit/Push
+            # Step 10 -- Create License File
+            PluginClient.create_license_file(connection, workspace_path, variables)
+            # Step 11 -- Add/Commit/Push
             push_cmd='#!/bin/sh\ncd %s\n%s add -A\n%s commit -m "Initial Plugin Setup"\n%s push "https://%s:%s@github.com/%s/%s.git"' \
                     % (variables['github_repo_name'], variables['git_path'], variables['git_path'], variables['git_path'],
-                        variables['github_username'], variables['github_password'], variables['github_organization'], variables['github_repo_name'])
+                        variables['github_username'], variables['github_password'], path, variables['github_repo_name'])
             PluginClient.execute_command(connection, workspace_path, push_cmd)
         except Exception:
             traceback.print_exc(file=sys.stdout)
@@ -175,12 +190,24 @@ deploy:
 
     @staticmethod
     def create_build_gradle_file(connection, workspace_path, variables):
-        contents='''defaultTasks 'build'
+        contents='''plugins {
+    id "com.github.hierynomus.license" version "0.13.0"
+}
+
+defaultTasks 'build'
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
 version='%s'
+
+license {
+    header rootProject.file('License.md')
+    strictCheck false
+    excludes(["**/*.json"])
+    ext.year = Calendar.getInstance().get(Calendar.YEAR)
+    ext.name = 'XEBIALABS'
+}
 ''' % variables['initial_version']
         repo_directory=OverthereUtils.constructPath(connection.getFile(workspace_path), '%s' % variables['github_repo_name'])
         build_gradle_file=connection.getFile(OverthereUtils.constructPath(connection.getFile(repo_directory), 'build.gradle'))
@@ -200,15 +227,47 @@ supervisord.pid
 
     @staticmethod
     def create_readme_file(connection, workspace_path, variables):
+        if variables['create_in_github_organization']:
+            path = variables['github_organization']
+        else:
+            path = variables['github_username']
         contents='''# %s
 
 [![Build Status](https://travis-ci.org/%s/%s.svg?branch=master)](https://travis-ci.org/%s/%s)
 [REPLACE ME WITH CODACY BADGE](https://www.codacy.com)
 [![Code Climate](https://codeclimate.com/github/%s/%s/badges/gpa.svg)](https://codeclimate.com/github/%s/%s)
-''' % (variables['github_repo_name'], variables['github_organization'],
-       variables['github_repo_name'], variables['github_organization'],
-       variables['github_repo_name'], variables['github_organization'], variables['github_repo_name'],
-       variables['github_organization'], variables['github_repo_name'])
+[![License: MIT][%s-license-image] ][%s-license-url]
+[![Github All Releases][%s-downloads-image]]()
+
+[%s-license-image]: https://img.shields.io/badge/License-MIT-yellow.svg
+[%s-license-url]: https://opensource.org/licenses/MIT
+[%s-downloads-image]: https://img.shields.io/github/downloads/xebialabs-community/%s/total.svg
+
+## Preface
+
+## Overview
+
+## Installation
+
+## References
+''' % (variables['github_repo_name'], path, variables['github_repo_name'], path,
+       variables['github_repo_name'], path, variables['github_repo_name'], path,
+       variables['github_repo_name'], variables['github_repo_name'], variables['github_repo_name'], variables['github_repo_name'],
+       variables['github_repo_name'], variables['github_repo_name'], variables['github_repo_name'], variables['github_repo_name'],)
         repo_directory=OverthereUtils.constructPath(connection.getFile(workspace_path), '%s' % variables['github_repo_name'])
         readme_file=connection.getFile(OverthereUtils.constructPath(connection.getFile(repo_directory), 'README.md'))
+        OverthereUtils.write(String(contents).getBytes(), readme_file)
+
+    @staticmethod
+    def create_license_file(connection, workspace_path, variables):
+        contents='''
+Copyright ${year} ${name}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.'''
+        repo_directory=OverthereUtils.constructPath(connection.getFile(workspace_path), '%s' % variables['github_repo_name'])
+        readme_file=connection.getFile(OverthereUtils.constructPath(connection.getFile(repo_directory), 'License.md'))
         OverthereUtils.write(String(contents).getBytes(), readme_file)
