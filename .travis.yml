@@ -6,7 +6,7 @@ deploy:
     secure: lVPiJrpYryVj7AniTRdvC0bJWz9VZLQg9jCf/v03mYmmmgiWmIwJ69Hxd/5Pi4gumMi5xN0u+sram9Bp40HbQmXwcnRpWFDgqXso79l9SYK4d2yYFXS42/3HEfpG0p7fuE0NRYbK4KM2WlYR9UtbPPordnep7TK5O3Rfh46x/4XVhFIiTAehETqAvEnDf325NSyahKnbaRMXsKgAzxZCIPFu6MLtMn+6b2xr/Mi59Rx9O/ElyHHfzH4KxmyRxTRVyCsE0B5qPmvk0mlweCry3stKpGOSZ6kjooVH7VJDR1JYD7hDG1k1M+4ObPobVFZASwCD2cgm8VMuBS3M6mb8CdsPuoHmkbaZ2zq93fG8pkm81lwKUuvvWg1WkYbVJTp+pjziRs7Y1cmrx6KcQoNqCiI5jdx7mUwqCgIRlqi5xEyuObW0mTAt+n1XVy856oMjOgWiBDdL2FJxbzlT23pN0Xp/TAQ3sLlM2AQdATAzVdwGc0NhWpCn0uX30zYNd97A8DzbpHrQmZWAuMdfnQ2V1Vje2mMgBL6nqYdIY1YsDMA6qRwdwJMwAUIg5tpPS0wV1TAkPc7ptiHklvwR+hSHF0W68SkaF9jc05Sucx3YUFUQsOCnZo6flJbnDS/eyvzi9i9PZPbOzipt2QkJdAXS6W/s/cNeR/9LLaTZSCPU5oo=
   file:
   - build/libs/xlr-plugin-plugin-1.1.0.jar
-  - build/resources/main/template/XLR_Plugin_Template.xlr/XLR_Plugin_Template.xlr
+  - build/resources/main/template/XLR_Plugin_Template.xlr
   skip_cleanup: true
   on:
     all_branches: true
