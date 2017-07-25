@@ -19,7 +19,7 @@
         <property name="github_username" kind="string" category="input" label="GitHub Username" required="true"/>
         <property name="github_api_token" kind="string" category="input" label="GitHub API Token" required="true" password="true"/>
         <property name="create_in_github_organization" kind="boolean" category="input" label="Create In GitHub Organization" required="true"/>
-        <property name="github_organization" kind="string" category="input" label="GitHub Organization"/>
+        <property name="github_organization" kind="string" category="input" label="GitHub Organization" required="false"/>
         <property name="github_password" kind="string" category="input" label="GitHub Password" required="true" password="true"/>
     </type>
 
@@ -30,9 +30,9 @@
     <type type="plugin.ConfigureGitHubRepository" extends="github.Task" label="Configure GitHub Repository">
         <property name="github_repo_name" kind="string" category="input" label="GitHub Repo Name" required="true"/>
         <property name="initial_version" kind="string" category="input" label="Initial Version" required="true"/>
-        <property name="integrate_with_hipchat" kind="boolean" category="input" label="Integrate With HipChat?"/>
-        <property name="hipchat_token" kind="string" category="input" label="HipChat Token" password="true"/>
-        <property name="hipchat_room_id" kind="string" category="input" label="HipChat Room ID"/>
+        <property name="integrate_with_hipchat" kind="boolean" category="input" label="Integrate With HipChat?" required="true"/>
+        <property name="hipchat_token" kind="string" category="input" label="HipChat Token" password="true" required="false"/>
+        <property name="hipchat_room_id" kind="string" category="input" label="HipChat Room ID" required="false"/>
         <property name="git_path" kind="string" category="input" label="Git Path" required="true"/>
         <property name="travis_path" kind="string" category="input" label="Travis Path" required="true"/>
         <property name="gradle_path" kind="string" category="input" label="Gradle Path" required="true"/>
